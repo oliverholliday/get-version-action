@@ -1,0 +1,37 @@
+name: 'Get Version'
+description: 'Extracts the version from github.ref.'
+outputs:
+  version:
+    description: 'The pushed version, for example "v1.2.7"'
+  version-without-v:
+    description: 'The pushed version, without the v prefix, for example "1.2.7"'
+  major:
+    description: 'The semver major version, for example "1" in the case of "v1.2.3-ALPHA.0+BUILD.1"'
+  minor:
+    description: 'The semver minor version, for example "2" in the case of "v1.2.3-ALPHA.0+BUILD.1"'
+  patch:
+    description: 'The semver patch version, for example "3" in the case of "v1.2.3-ALPHA.0+BUILD.1"'
+  prerelease:
+    description: 'The semver prerelease version, for example "ALPHA.0" in the case of "v1.2.3-ALPHA.0+BUILD.1"'
+  build:
+    description: 'The semver build version, for example "BUILD.1" in the case of "v1.2.3-ALPHA.0+BUILD.1"'
+
+runs:
+  using: "composite"
+  steps:
+    - id: set-version
+      run: |
+        version_without_v=$(echo ${{github.ref_name}} | cut -c 2-)
+        major=$(echo ${{github.ref_name}} | cut -d 'v' -f 2 | cut -d '.' -f 1)
+        minor=$(echo ${{github.ref_name}} | cut -d 'v' -f 2 | cut -d '.' -f 2)
+        patch=$(echo ${{github.ref_name}} | cut -d 'v' -f 2 | cut -d '.' -f 3)
+        prerelease=$(echo ${{github.ref_name}} | cut -d 'v' -f 2 | cut -d '-' -f 2 | cut -d '+' -f 1)
+        build=$(echo ${{github.ref_name}} | cut -d 'v' -f 2 | cut -d '+' -f 2)
+        echo "version=${{github.ref_name}}" >> $GITHUB_OUTPUT
+        echo "version-without-v=$version_without_v" >> $GITHUB_OUTPUT
+        echo "major=$major" >> $GITHUB_OUTPUT
+        echo "minor=$minor" >> $GITHUB_OUTPUT
+        echo "patch=$patch" >> $GITHUB_OUTPUT
+        echo "prerelease=$prerelease" >> $GITHUB_OUTPUT
+        echo "build=$build" >> $GITHUB_OUTPUT
+      shell: bash
