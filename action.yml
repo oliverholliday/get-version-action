@@ -42,3 +42,7 @@ runs:
         echo "prerelease=$prerelease" >> $GITHUB_OUTPUT
         echo "build=$build" >> $GITHUB_OUTPUT
       shell: bash
+
+branding:
+  icon: chevron-up
+  color: orange
