@@ -1,4 +1,4 @@
-name: "Get Version"
+name: "semver"
 description: "Extracts the version from github.ref."
 outputs:
   version:

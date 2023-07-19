@@ -1,4 +1,4 @@
-## Get Version Action
+## Semver Action
 
 This GitHub Action extracts the version from `github.ref` and outputs it in various formats.
 
