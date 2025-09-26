@@ -1,11 +1,11 @@
 name: "Get Semantic Version"
-description: "Extracts the version from github.ref."
+description: "Extracts the version from github.ref_name."
 outputs:
   version:
-    description: 'The pushed version, for example "v1.2.7"'
+    description: 'The pushed version, for example "v1.2.7" or "1.2.7"'
     value: ${{ steps.set-version.outputs.version }}
   version-without-v:
-    description: 'The pushed version, without the v prefix, for example "1.2.7"'
+    description: 'The pushed version - without the optional v prefix - for example "1.2.7"'
     value: ${{ steps.set-version.outputs.version-without-v }}
   major:
     description: 'The semver major version, for example "1" in the case of "v1.2.3-ALPHA.0+BUILD.1"'
@@ -28,13 +28,25 @@ runs:
   steps:
     - id: set-version
       run: |
-        version_without_v=$(echo ${{github.ref_name}} | cut -c 2-)
-        major=$(echo ${{github.ref_name}} | cut -sd 'v' -f 2 | cut -sd '.' -f 1)
-        minor=$(echo ${{github.ref_name}} | cut -sd 'v' -f 2 | cut -sd '.' -f 2)
-        patch=$(echo ${{github.ref_name}} | cut -sd 'v' -f 2 | cut -sd '.' -f 3)
-        prerelease=$(echo ${{github.ref_name}} | cut -sd 'v' -f 2 | cut -sd '-' -f 2 | cut -sd '+' -f 1)
-        build=$(echo ${{github.ref_name}} | cut -sd 'v' -f 2 | cut -sd '+' -f 2)
-        echo "version=${{github.ref_name}}" >> $GITHUB_OUTPUT
+        version=$(echo "${{github.ref_name}}")
+        version_without_v=$(echo "$version" | sed 's/^v//')
+
+        # Use semver regex from semver.org
+        semver_regex='^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$'
+
+        # use perl to extract capture groups
+        if [[ $(echo "$version_without_v" | perl -ne "print if /$semver_regex/") ]]; then
+          major=$(echo "$version_without_v" | perl -ne "/$semver_regex/ && print \$1")
+          minor=$(echo "$version_without_v" | perl -ne "/$semver_regex/ && print \$2")
+          patch=$(echo "$version_without_v" | perl -ne "/$semver_regex/ && print \$3")
+          prerelease=$(echo "$version_without_v" | perl -ne "/$semver_regex/ && print \$4")
+          build=$(echo "$version_without_v" | perl -ne "/$semver_regex/ && print \$5")
+        else
+          echo "Error: '$version_without_v' is not a valid semver version"
+          exit 1
+        fi
+        
+        echo "version=$version" >> $GITHUB_OUTPUT
         echo "version-without-v=$version_without_v" >> $GITHUB_OUTPUT
         echo "major=$major" >> $GITHUB_OUTPUT
         echo "minor=$minor" >> $GITHUB_OUTPUT
